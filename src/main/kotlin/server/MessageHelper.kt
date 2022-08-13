@@ -60,6 +60,8 @@ object MessageHelper {
         val category = jsonMap["category"].toString()
         // Unique id of this message
         val messageId = jsonMap["message_id"].toString()
+
+        @Suppress("UNCHECKED_CAST")
         val dataPayload = jsonMap["data"] as Map<String, String>
         return CcsInMessage(from, category, messageId, dataPayload)
     }

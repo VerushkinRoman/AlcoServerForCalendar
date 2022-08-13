@@ -1,7 +1,5 @@
-import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
@@ -9,13 +7,14 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Tray
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -40,7 +39,6 @@ fun main() = application {
     CcsClient.prepareClient(fcmProjectSenderId, fcmServerKey, false)
 
     var isVisible by remember { mutableStateOf(true) }
-    val isRunning = remember { mutableStateOf(false) }
 
     Window(
         onCloseRequest = { isVisible = false },
@@ -48,7 +46,11 @@ fun main() = application {
         visible = isVisible,
         title = "AlcoServer",
         icon = painterResource("logo.png")
-    ) { MaterialTheme { ButtonPanel(Modifier.fillMaxSize(), isRunning) } }
+    ) {
+        MaterialTheme {
+            ButtonPanel(modifier = Modifier.fillMaxSize())
+        }
+    }
 
     Tray(
         icon = painterResource("logo.png"),
@@ -58,62 +60,64 @@ fun main() = application {
             Item("Exit", onClick = ::exitApplication)
         },
     )
-
-    Thread {
-        runClient(isRunning)
-    }.start()
 }
 
-@Preview
+@Suppress("FunctionName")
 @Composable
-fun ButtonPanel(modifier: Modifier, isRunning: MutableState<Boolean>) {
-    Row(modifier = modifier) {
-        val buttonModifier = Modifier
-            .align(Alignment.CenterVertically)
-            .weight(1f)
-            .padding(5.dp)
-            .fillMaxHeight()
+private fun ButtonPanel(modifier: Modifier) {
 
-        Button(modifier = buttonModifier,
+    val isRunning by CcsClient.instance.isRunning.collectAsState()
+
+    Row(
+        modifier = modifier
+    ) {
+        Button(
+            modifier = Modifier
+                .weight(1f)
+                .padding(5.dp),
             colors = ButtonDefaults.buttonColors(
-                backgroundColor = if (isRunning.value) Color.Green else Color.White,
-                contentColor = Color.Black,
+                backgroundColor = if (isRunning) Color.Green else Color.White
             ),
-            border = if (isRunning.value) null else BorderStroke(Dp.Hairline, Color.Black),
+            border = if (isRunning) null else BorderStroke(Dp.Hairline, Color.Black),
             onClick = {
-                runClient(isRunning)
-            }) {
-            Text("Start")
+                try {
+                    CcsClient.instance.connect()
+                } catch (e: XMPPException) {
+                    Logger.getLogger("Main").log(Level.SEVERE, "Error trying to connect.", e)
+                }
+            }
+        ) {
+            Text(
+                text = "Start",
+                fontSize = 30.sp,
+                color = Color.Black,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxSize()
+            )
         }
-        Button(modifier = buttonModifier,
+
+        Button(
+            modifier = Modifier
+                .weight(1f)
+                .padding(5.dp),
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = Color.Red,
-                contentColor = Color.White
             ),
             onClick = {
-                stopClient(isRunning)
-            }) {
-            Text("Stop")
+                try {
+                    CcsClient.instance.disconnect(isManualStop = true)
+                } catch (e: XMPPException) {
+                    Logger.getLogger("Main").log(Level.SEVERE, "Error trying to disconnect.", e)
+                }
+            }
+        ) {
+            Text(
+                text = "Stop",
+                fontSize = 30.sp,
+                color = Color.Black,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxSize()
+            )
         }
-    }
-}
-
-fun runClient(isRunning: MutableState<Boolean>) {
-    try {
-        CcsClient.instance.connect { isRunning.value = it }
-    } catch (e: XMPPException) {
-        Logger.getLogger("Main").log(Level.SEVERE, "Error trying to connect.", e)
-        Thread.sleep(1_000)
-        runClient(isRunning)
-    }
-}
-
-fun stopClient(isRunning: MutableState<Boolean>) {
-    try {
-        CcsClient.instance.disconnect { isRunning.value = !it }
-    } catch (e: XMPPException) {
-        Logger.getLogger("Main").log(Level.SEVERE, "Error trying to disconnect.", e)
-        Thread.sleep(1_000)
-        stopClient(isRunning)
     }
 }

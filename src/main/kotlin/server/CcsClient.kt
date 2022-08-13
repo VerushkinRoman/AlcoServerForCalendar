@@ -2,6 +2,8 @@ package server
 
 import bean.CcsInMessage
 import bean.CcsOutMessage
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.jivesoftware.smack.*
 import org.jivesoftware.smack.ConnectionConfiguration.SecurityMode
 import org.jivesoftware.smack.filter.PacketTypeFilter
@@ -25,6 +27,7 @@ import javax.net.ssl.SSLSocketFactory
  * https://firebase.google.com/docs/cloud-messaging/xmpp-server-ref
  */
 
+@Suppress("unused")
 class CcsClient private constructor() : PacketListener {
     private var connection: XMPPConnection? = null
     private var config: ConnectionConfiguration? = null
@@ -32,6 +35,45 @@ class CcsClient private constructor() : PacketListener {
     private var mProjectId: String? = null
     private var mDebuggable = false
     private var fcmServerUsername: String? = null
+    private var isManualStop: Boolean = false
+
+    private val _isRunning = MutableStateFlow(false)
+    val isRunning = _isRunning.asStateFlow()
+
+    private val listener: ConnectionListener = object : ConnectionListener {
+        override fun reconnectionSuccessful() {
+            logger.log(Level.INFO, "Reconnection successful ...")
+            // TODO: handle the reconnecting successful
+        }
+
+        override fun reconnectionFailed(e: Exception) {
+            logger.log(Level.INFO, "Reconnection failed: ", e.message)
+            _isRunning.value = false
+            Thread.sleep(1000)
+            connect()
+        }
+
+        override fun reconnectingIn(seconds: Int) {
+            logger.log(Level.INFO, "Reconnecting in %d secs", seconds)
+            // TODO: handle the reconnecting in
+        }
+
+        override fun connectionClosedOnError(e: Exception) {
+            logger.log(Level.INFO, "Connection closed on error")
+            _isRunning.value = false
+            Thread.sleep(1000)
+            connect()
+        }
+
+        override fun connectionClosed() {
+            logger.log(Level.INFO, "Connection closed")
+            _isRunning.value = false
+            if (!isManualStop) {
+                Thread.sleep(1000)
+                connect()
+            }
+        }
+    }
 
     private constructor(projectId: String, apiKey: String, debuggable: Boolean) : this() {
         mApiKey = apiKey
@@ -56,7 +98,9 @@ class CcsClient private constructor() : PacketListener {
      * Connects to FCM Cloud Connection Server using the supplied credentials
      */
     @Throws(XMPPException::class)
-    fun connect(successCallback: (Boolean) -> Unit) {
+    fun connect() {
+        isManualStop = false
+        connection?.removeConnectionListener(listener)
         config = ConnectionConfiguration(Util.FCM_SERVER, Util.FCM_PORT).apply {
             securityMode = SecurityMode.enabled
             isReconnectionAllowed = true
@@ -68,32 +112,7 @@ class CcsClient private constructor() : PacketListener {
         }
         connection = XMPPConnection(config)
         connection?.connect()
-        connection?.addConnectionListener(object : ConnectionListener {
-            override fun reconnectionSuccessful() {
-                logger.log(Level.INFO, "Reconnection successful ...")
-                // TODO: handle the reconnecting successful
-            }
-
-            override fun reconnectionFailed(e: Exception) {
-                logger.log(Level.INFO, "Reconnection failed: ", e.message)
-                // TODO: handle the reconnection failed
-            }
-
-            override fun reconnectingIn(seconds: Int) {
-                logger.log(Level.INFO, "Reconnecting in %d secs", seconds)
-                // TODO: handle the reconnecting in
-            }
-
-            override fun connectionClosedOnError(e: Exception) {
-                logger.log(Level.INFO, "Connection closed on error")
-                // TODO: handle the connection closed on error
-            }
-
-            override fun connectionClosed() {
-                logger.log(Level.INFO, "Connection closed")
-                // TODO: handle the connection closed
-            }
-        })
+        connection?.addConnectionListener(listener)
 
         // Handle incoming packets (the class implements the PacketListener)
         connection?.addPacketListener(this, PacketTypeFilter(Message::class.java))
@@ -104,18 +123,19 @@ class CcsClient private constructor() : PacketListener {
             PacketTypeFilter(Message::class.java)
         )
         connection?.login(fcmServerUsername, mApiKey)
-        successCallback(true)
+        _isRunning.value = true
         logger.log(Level.INFO, "Logged in: $fcmServerUsername")
     }
 
-    fun disconnect (successCallback: (Boolean) -> Unit) {
+    fun disconnect(isManualStop: Boolean = false) {
+        this.isManualStop = isManualStop
         connection?.disconnect()
-        successCallback(true)
+        _isRunning.value = false
     }
 
-    fun reconnect() {
-        // Try to connect again using exponential back-off!
-    }
+//    fun reconnect() {
+//        // Try to connect again using exponential back-off!
+//    }
 
     /**
      * Handles incoming messages
@@ -126,6 +146,7 @@ class CcsClient private constructor() : PacketListener {
         val fcmPacket: FcmPacketExtension = incomingMessage.getExtension(Util.FCM_NAMESPACE) as FcmPacketExtension
         val json: String = fcmPacket.json
         try {
+            @Suppress("UNCHECKED_CAST")
             val jsonMap = JSONValue.parseWithException(json) as Map<String, Any>
             val messageType = jsonMap["message_type"]
             if (messageType == null) {
@@ -166,7 +187,7 @@ class CcsClient private constructor() : PacketListener {
     /**
      * Handles an ACK message from FCM
      */
-    private fun handleAckReceipt(jsonMap: Map<String, Any>) {
+    private fun handleAckReceipt(@Suppress("UNUSED_PARAMETER") jsonMap: Map<String, Any>) {
         // TODO: handle the ACK in the proper way
     }
 
@@ -200,7 +221,7 @@ class CcsClient private constructor() : PacketListener {
      * Handles a Delivery Receipt message from FCM (when a device confirms that
      * it received a particular message)
      */
-    private fun handleDeliveryReceipt(jsonMap: Map<String, Any>) {
+    private fun handleDeliveryReceipt(@Suppress("UNUSED_PARAMETER") jsonMap: Map<String, Any>) {
         // TODO: handle the delivery receipt
     }
 
