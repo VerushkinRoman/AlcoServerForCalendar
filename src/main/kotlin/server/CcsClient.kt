@@ -37,8 +37,8 @@ class CcsClient private constructor() : PacketListener {
     private var fcmServerUsername: String? = null
     private var isManualStop: Boolean = false
 
-    private val _isRunning = MutableStateFlow(false)
-    val isRunning = _isRunning.asStateFlow()
+    private val _isConnected = MutableStateFlow(false)
+    val isConnected = _isConnected.asStateFlow()
 
     private val listener: ConnectionListener = object : ConnectionListener {
         override fun reconnectionSuccessful() {
@@ -48,7 +48,6 @@ class CcsClient private constructor() : PacketListener {
 
         override fun reconnectionFailed(e: Exception) {
             logger.log(Level.INFO, "Reconnection failed: ", e.message)
-            _isRunning.value = false
             Thread.sleep(1000)
             connect()
         }
@@ -60,14 +59,12 @@ class CcsClient private constructor() : PacketListener {
 
         override fun connectionClosedOnError(e: Exception) {
             logger.log(Level.INFO, "Connection closed on error")
-            _isRunning.value = false
             Thread.sleep(1000)
             connect()
         }
 
         override fun connectionClosed() {
             logger.log(Level.INFO, "Connection closed")
-            _isRunning.value = false
             if (!isManualStop) {
                 Thread.sleep(1000)
                 connect()
@@ -101,10 +98,7 @@ class CcsClient private constructor() : PacketListener {
      */
     @Throws(XMPPException::class)
     fun connect() {
-        isManualStop = false
-        connection?.removeConnectionListener(listener)
-        connection?.removePacketListener(this)
-        connection?.removePacketInterceptor(packetInterceptor)
+        disconnect()
         config = ConnectionConfiguration(Util.FCM_SERVER, Util.FCM_PORT).apply {
             securityMode = SecurityMode.enabled
             isReconnectionAllowed = true
@@ -127,14 +121,17 @@ class CcsClient private constructor() : PacketListener {
             PacketTypeFilter(Message::class.java)
         )
         connection?.login(fcmServerUsername, mApiKey)
-        _isRunning.value = true
+        _isConnected.value = true
         logger.log(Level.INFO, "Logged in: $fcmServerUsername")
     }
 
     fun disconnect(isManualStop: Boolean = false) {
         this.isManualStop = isManualStop
+        connection?.removeConnectionListener(listener)
+        connection?.removePacketListener(this)
+        connection?.removePacketInterceptor(packetInterceptor)
         connection?.disconnect()
-        _isRunning.value = false
+        _isConnected.value = false
     }
 
 //    fun reconnect() {

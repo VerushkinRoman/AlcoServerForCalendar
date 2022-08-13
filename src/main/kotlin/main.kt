@@ -67,7 +67,7 @@ fun main() = application {
 @Composable
 private fun ButtonPanel(modifier: Modifier) {
 
-    val isRunning by CcsClient.instance.isRunning.collectAsState()
+    val isRunning by CcsClient.instance.isConnected.collectAsState()
 
     Row(
         modifier = modifier
@@ -75,7 +75,7 @@ private fun ButtonPanel(modifier: Modifier) {
         Button(
             colors = ButtonDefaults.buttonColors(backgroundColor = if (isRunning) Color.Green else Color.White),
             border = if (isRunning) null else BorderStroke(Dp.Hairline, Color.Black),
-            onClick = { connect() },
+            onClick = { if (!isRunning) connect() },
             modifier = Modifier
                 .weight(1f)
                 .padding(5.dp)
