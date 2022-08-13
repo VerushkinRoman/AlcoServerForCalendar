@@ -48,6 +48,7 @@ fun main() = application {
         icon = painterResource("logo.png")
     ) {
         MaterialTheme {
+            LaunchedEffect(true) { connect() }
             ButtonPanel(modifier = Modifier.fillMaxSize())
         }
     }
@@ -72,20 +73,12 @@ private fun ButtonPanel(modifier: Modifier) {
         modifier = modifier
     ) {
         Button(
+            colors = ButtonDefaults.buttonColors(backgroundColor = if (isRunning) Color.Green else Color.White),
+            border = if (isRunning) null else BorderStroke(Dp.Hairline, Color.Black),
+            onClick = { connect() },
             modifier = Modifier
                 .weight(1f)
-                .padding(5.dp),
-            colors = ButtonDefaults.buttonColors(
-                backgroundColor = if (isRunning) Color.Green else Color.White
-            ),
-            border = if (isRunning) null else BorderStroke(Dp.Hairline, Color.Black),
-            onClick = {
-                try {
-                    CcsClient.instance.connect()
-                } catch (e: XMPPException) {
-                    Logger.getLogger("Main").log(Level.SEVERE, "Error trying to connect.", e)
-                }
-            }
+                .padding(5.dp)
         ) {
             Text(
                 text = "Start",
@@ -97,19 +90,11 @@ private fun ButtonPanel(modifier: Modifier) {
         }
 
         Button(
+            colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red),
+            onClick = { disconnect() },
             modifier = Modifier
                 .weight(1f)
-                .padding(5.dp),
-            colors = ButtonDefaults.buttonColors(
-                backgroundColor = Color.Red,
-            ),
-            onClick = {
-                try {
-                    CcsClient.instance.disconnect(isManualStop = true)
-                } catch (e: XMPPException) {
-                    Logger.getLogger("Main").log(Level.SEVERE, "Error trying to disconnect.", e)
-                }
-            }
+                .padding(5.dp)
         ) {
             Text(
                 text = "Stop",
@@ -119,5 +104,21 @@ private fun ButtonPanel(modifier: Modifier) {
                 modifier = Modifier.fillMaxSize()
             )
         }
+    }
+}
+
+private fun disconnect() {
+    try {
+        CcsClient.instance.disconnect(isManualStop = true)
+    } catch (e: XMPPException) {
+        Logger.getLogger("Main").log(Level.SEVERE, "Error trying to disconnect.", e)
+    }
+}
+
+private fun connect() {
+    try {
+        CcsClient.instance.connect()
+    } catch (e: XMPPException) {
+        Logger.getLogger("Main").log(Level.SEVERE, "Error trying to connect.", e)
     }
 }

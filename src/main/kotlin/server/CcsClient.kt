@@ -75,6 +75,8 @@ class CcsClient private constructor() : PacketListener {
         }
     }
 
+    private val packetInterceptor = PacketInterceptor { packet -> logger.log(Level.INFO, "Sent: {0}", packet.toXML()) }
+
     private constructor(projectId: String, apiKey: String, debuggable: Boolean) : this() {
         mApiKey = apiKey
         mProjectId = projectId
@@ -101,6 +103,8 @@ class CcsClient private constructor() : PacketListener {
     fun connect() {
         isManualStop = false
         connection?.removeConnectionListener(listener)
+        connection?.removePacketListener(this)
+        connection?.removePacketInterceptor(packetInterceptor)
         config = ConnectionConfiguration(Util.FCM_SERVER, Util.FCM_PORT).apply {
             securityMode = SecurityMode.enabled
             isReconnectionAllowed = true
@@ -119,7 +123,7 @@ class CcsClient private constructor() : PacketListener {
 
         // Log all outgoing packets
         connection?.addPacketInterceptor(
-            { packet -> logger.log(Level.INFO, "Sent: {0}", packet.toXML()) },
+            packetInterceptor,
             PacketTypeFilter(Message::class.java)
         )
         connection?.login(fcmServerUsername, mApiKey)
