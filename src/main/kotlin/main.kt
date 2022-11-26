@@ -1,26 +1,10 @@
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Tray
-import androidx.compose.ui.window.Window
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.window.application
-import androidx.compose.ui.window.rememberWindowState
 import org.jivesoftware.smack.XMPPException
+import presentation.ServerGUI
 import server.CcsClient
+import server_daemon.ServerDaemon
 import java.io.File
 import java.io.InputStream
 import java.util.logging.Level
@@ -28,6 +12,29 @@ import java.util.logging.Logger
 
 fun main() = application {
 
+    val ccsClient = prepareCcsClient()
+    val isServerRunning by ccsClient.isConnected.collectAsState()
+    val serverDaemon = ServerDaemon(
+        isServerRunning = { isServerRunning },
+        startServer = { connect() }
+    )
+
+    ServerGUI(
+        connect = {
+            serverDaemon.startMonitoring()
+            connect()
+        },
+        disconnect = {
+            serverDaemon.stopMonitoring()
+            disconnect()
+        },
+        isRunning = { isServerRunning }
+    )
+
+    connect()
+}
+
+private fun prepareCcsClient(): CcsClient {
     val inputStream: InputStream = File("AlcoServerData.txt").inputStream()
     val lineList = mutableListOf<String>()
     inputStream.bufferedReader().forEachLine { lineList.add(it) }
@@ -38,73 +45,7 @@ fun main() = application {
 
     CcsClient.prepareClient(fcmProjectSenderId, fcmServerKey, false)
 
-    var isVisible by remember { mutableStateOf(true) }
-
-    Window(
-        onCloseRequest = { isVisible = false },
-        state = rememberWindowState(size = DpSize(250.dp, 100.dp)),
-        visible = isVisible,
-        title = "AlcoServer",
-        icon = painterResource("logo.png")
-    ) {
-        MaterialTheme {
-            LaunchedEffect(true) { connect() }
-            ButtonPanel(modifier = Modifier.fillMaxSize())
-        }
-    }
-
-    Tray(
-        icon = painterResource("logo.png"),
-        tooltip = "AlcoServer",
-        onAction = { isVisible = true },
-        menu = {
-            Item("Exit", onClick = ::exitApplication)
-        },
-    )
-}
-
-@Suppress("FunctionName")
-@Composable
-private fun ButtonPanel(modifier: Modifier) {
-
-    val isRunning by CcsClient.instance.isConnected.collectAsState()
-
-    Row(
-        modifier = modifier
-    ) {
-        Button(
-            colors = ButtonDefaults.buttonColors(backgroundColor = if (isRunning) Color.Green else Color.White),
-            border = if (isRunning) null else BorderStroke(Dp.Hairline, Color.Black),
-            onClick = { if (!isRunning) connect() },
-            modifier = Modifier
-                .weight(1f)
-                .padding(5.dp)
-        ) {
-            Text(
-                text = "Start",
-                fontSize = 30.sp,
-                color = Color.Black,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-
-        Button(
-            colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red),
-            onClick = { disconnect() },
-            modifier = Modifier
-                .weight(1f)
-                .padding(5.dp)
-        ) {
-            Text(
-                text = "Stop",
-                fontSize = 30.sp,
-                color = Color.Black,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-    }
+    return CcsClient.instance
 }
 
 private fun disconnect() {
