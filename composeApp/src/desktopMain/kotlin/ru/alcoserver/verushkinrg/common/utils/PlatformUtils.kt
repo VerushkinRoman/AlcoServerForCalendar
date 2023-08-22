@@ -1,4 +1,4 @@
-package ru.alcoserver.verushkinrg
+package ru.alcoserver.verushkinrg.common.utils
 
 import java.awt.Desktop
 import java.net.URI

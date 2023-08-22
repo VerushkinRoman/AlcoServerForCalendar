@@ -1,8 +1,6 @@
 package ru.alcoserver.verushkinrg.notificationService.compose
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -17,7 +15,8 @@ import androidx.compose.ui.window.rememberDialogState
 import moe.tlaster.precompose.flow.collectAsStateWithLifecycle
 import moe.tlaster.precompose.viewmodel.viewModel
 import ru.alcoserver.verushkinrg.common.compose.ErrorDialog
-import ru.alcoserver.verushkinrg.notificationComposer.compose.NotificationComposer
+import ru.alcoserver.verushkinrg.dbManager.compose.DBManagerScreen
+import ru.alcoserver.verushkinrg.notificationComposer.compose.NotificationComposerScreen
 import ru.alcoserver.verushkinrg.notificationService.compose.components.ServiceScreenContent
 import ru.alcoserver.verushkinrg.notificationService.presentation.NotificationServiceViewModel
 import ru.alcoserver.verushkinrg.notificationService.presentation.model.NotificationServiceEvent
@@ -69,11 +68,7 @@ private fun Dialogs(
             resizable = false
         ) {
             AppTheme {
-                Button(
-                    onClick = { onEvent(NotificationServiceEvent.CloseManageDialog) }
-                ) {
-                    Text(text = "Close")
-                }
+                DBManagerScreen(modifier = modifier.padding(16.dp))
             }
         }
     }
@@ -89,7 +84,7 @@ private fun Dialogs(
             resizable = false
         ) {
             AppTheme {
-                NotificationComposer(modifier = modifier.padding(16.dp))
+                NotificationComposerScreen(modifier = modifier.padding(16.dp))
             }
         }
     }

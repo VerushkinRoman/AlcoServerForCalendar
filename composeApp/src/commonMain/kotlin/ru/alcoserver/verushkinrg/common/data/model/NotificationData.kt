@@ -1,4 +1,4 @@
-package ru.alcoserver.verushkinrg.notificationComposer.presentation.model
+package ru.alcoserver.verushkinrg.common.data.model
 
 import com.google.cloud.Timestamp
 import com.google.cloud.firestore.annotation.ServerTimestamp

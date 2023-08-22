@@ -1,4 +1,4 @@
-package ru.alcoserver.verushkinrg.notificationComposer.presentation.model
+package ru.alcoserver.verushkinrg.common.data.model
 
 data class User(
     val email: String,

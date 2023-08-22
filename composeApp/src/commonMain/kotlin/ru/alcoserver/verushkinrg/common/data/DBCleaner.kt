@@ -5,19 +5,22 @@ import com.google.cloud.firestore.FieldValue
 import com.google.cloud.firestore.SetOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.cloud.FirestoreClient
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.ensureActive
 import ru.alcoserver.verushkinrg.common.core.di.Inject
-import ru.alcoserver.verushkinrg.common.settings.SettingsRepository
-import ru.alcoserver.verushkinrg.common.utils.toDataClass
 import ru.alcoserver.verushkinrg.common.data.model.CollectionData
 import ru.alcoserver.verushkinrg.common.data.model.Day
+import ru.alcoserver.verushkinrg.common.settings.SettingsRepository
+import ru.alcoserver.verushkinrg.common.utils.toDataClass
 import java.time.LocalDate
 
 object DBCleaner {
     private val settingsRepository: SettingsRepository = Inject.instance()
 
-    fun cleanDatabase() {
+    suspend fun cleanDatabase(): Int = coroutineScope {
         val collectionsData =
             FirestoreClient.getFirestore().listCollections().mapNotNull { collectionReference ->
+                ensureActive()
                 val days = collectionReference.document("Dates").get().get().data?.values
                     ?.map { dayData ->
                         @Suppress("UNCHECKED_CAST")
@@ -46,10 +49,13 @@ object DBCleaner {
         deleteUsersAuth(outdatedCollectionIds, collectionsData.map { it.id })
 
         settingsRepository.dbCleanupDate = LocalDate.now().toEpochDay()
+
+        return@coroutineScope outdatedCollections.size
     }
 
-    private fun deleteCollections(collections: List<CollectionReference>) {
+    private suspend fun deleteCollections(collections: List<CollectionReference>) = coroutineScope {
         collections.forEach { collectionData ->
+            ensureActive()
             val future = collectionData.get()
             val documents = future.get().documents
             for (document in documents) {
@@ -70,10 +76,14 @@ object DBCleaner {
             .set(deletionMap, SetOptions.merge())
     }
 
-    private fun deleteUsersAuth(outdatedCollectionIds: List<String>, collectionIds: List<String>) {
+    private suspend fun deleteUsersAuth(
+        outdatedCollectionIds: List<String>,
+        collectionIds: List<String>
+    ) = coroutineScope {
         val firebaseAuth = FirebaseAuth.getInstance()
         val page = firebaseAuth.listUsers(null)
         for (user in page.iterateAll()) {
+            ensureActive()
             val userUid = user.uid
             if ((user.email ?: userUid) in outdatedCollectionIds) {
                 firebaseAuth.deleteUser(userUid)

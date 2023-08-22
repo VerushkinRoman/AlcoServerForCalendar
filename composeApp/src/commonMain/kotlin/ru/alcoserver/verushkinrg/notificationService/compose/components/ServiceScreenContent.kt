@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import ru.alcoserver.verushkinrg.notificationService.presentation.model.NotificationServiceEvent
 import ru.alcoserver.verushkinrg.notificationService.presentation.model.NotificationServiceState
-import ru.alcoserver.verushkinrg.openUrl
+import ru.alcoserver.verushkinrg.common.utils.openUrl
 
 @Composable
 fun ServiceScreenContent(

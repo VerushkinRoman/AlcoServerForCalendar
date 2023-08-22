@@ -19,7 +19,7 @@ import ru.alcoserver.verushkinrg.common.core.di.Inject
 import ru.alcoserver.verushkinrg.common.data.DBCleaner
 import ru.alcoserver.verushkinrg.common.settings.SettingsRepository
 import ru.alcoserver.verushkinrg.common.utils.CoroutinesDispatchers
-import ru.alcoserver.verushkinrg.notificationComposer.presentation.model.NotificationData
+import ru.alcoserver.verushkinrg.common.data.model.NotificationData
 import ru.alcoserver.verushkinrg.notificationService.presentation.messenger.Messenger
 import ru.alcoserver.verushkinrg.notificationService.presentation.model.NotificationServiceEvent
 import ru.alcoserver.verushkinrg.notificationService.presentation.model.NotificationServiceState
@@ -132,7 +132,11 @@ class NotificationServiceViewModel : ViewModel() {
                     if (settingsRepository.dbCleanupDate
                         < LocalDate.now().minusMonths(1).toEpochDay()
                     ) {
-                        DBCleaner.cleanDatabase()
+                        try {
+                            DBCleaner.cleanDatabase()
+                        } catch (e: Exception) {
+                            showError(e.message ?: e.toString())
+                        }
                     }
 
                     delay(1.days)
@@ -164,10 +168,9 @@ class NotificationServiceViewModel : ViewModel() {
                 val notification = documentSnapshot?.toObject(NotificationData::class.java)
                     ?: return@forEach
 
-                val response = Messenger.sendMessage(notification)
-                if (response != null) {
-                    notifications?.document(documentSnapshot.id)?.delete()
-                }
+                Messenger.sendMessage(notification) ?: return@forEach
+
+                notifications?.document(documentSnapshot.id)?.delete()
             }
         }
     }

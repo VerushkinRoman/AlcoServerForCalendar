@@ -1,6 +1,4 @@
-package ru.alcoserver.verushkinrg.common.presentation.model
-
-import ru.alcoserver.verushkinrg.notificationComposer.presentation.model.User
+package ru.alcoserver.verushkinrg.common.data.model
 
 data class FirebaseUser(
     val email: String = "",

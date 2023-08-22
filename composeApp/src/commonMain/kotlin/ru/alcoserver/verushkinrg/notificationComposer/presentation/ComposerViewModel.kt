@@ -1,8 +1,6 @@
 package ru.alcoserver.verushkinrg.notificationComposer.presentation
 
-import com.google.cloud.firestore.ListenerRegistration
-import com.google.firebase.cloud.FirestoreClient
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,14 +9,13 @@ import kotlinx.coroutines.launch
 import moe.tlaster.precompose.viewmodel.ViewModel
 import moe.tlaster.precompose.viewmodel.viewModelScope
 import ru.alcoserver.verushkinrg.common.core.di.Inject
+import ru.alcoserver.verushkinrg.common.data.NotificationManager
+import ru.alcoserver.verushkinrg.common.data.UsersRepo
+import ru.alcoserver.verushkinrg.common.data.model.User
 import ru.alcoserver.verushkinrg.common.utils.CoroutinesDispatchers
-import ru.alcoserver.verushkinrg.common.utils.toDataClass
 import ru.alcoserver.verushkinrg.notificationComposer.presentation.model.ComposerEvent
 import ru.alcoserver.verushkinrg.notificationComposer.presentation.model.ComposerState
-import ru.alcoserver.verushkinrg.common.presentation.model.FirebaseUser
-import ru.alcoserver.verushkinrg.notificationComposer.presentation.model.NotificationData
-import ru.alcoserver.verushkinrg.notificationComposer.presentation.model.User
-import ru.alcoserver.verushkinrg.common.presentation.model.toUser
+import ru.alcoserver.verushkinrg.common.data.model.NotificationData
 import java.time.LocalDate
 
 class ComposerViewModel : ViewModel() {
@@ -26,18 +23,11 @@ class ComposerViewModel : ViewModel() {
     val state: StateFlow<ComposerState> = _state.asStateFlow()
 
     private val coroutinesDispatchers: CoroutinesDispatchers = Inject.instance()
-
-    private var usersJob: Job? = null
     private var users: List<User> = emptyList()
-    private var registration: ListenerRegistration? = null
-    private val notifications = FirestoreClient.getFirestore().collection("Notifications")
-    private val usersDocuments = FirestoreClient.getFirestore()
-        .collection("Collection_of_all_users")
-        .document("Users")
 
     fun onEvent(event: ComposerEvent) {
         when (event) {
-            is ComposerEvent.OnScreenEnter -> startUsersJob()
+            is ComposerEvent.OnScreenEnter -> updateUsers()
             is ComposerEvent.OnScreenExit -> onCleared()
             is ComposerEvent.OnUserFilterInput -> filterUsers(filter = event.filter)
             is ComposerEvent.ClearUserFilter -> clearUserFilter()
@@ -55,18 +45,22 @@ class ComposerViewModel : ViewModel() {
 
         viewModelScope.launch {
             val extendedTitle =
-                state.value.title + buildString { (0..4).forEach { _ -> append("\n") } }
+                state.value.title + buildString {
+                    (0..500).forEach { _ -> append(" ") }
+                    (0..4).forEach { _ -> append("\n") }
+                }
 
-            val addedDocRef = notifications.document()
-            addedDocRef.set(
-                NotificationData(
-                    to = id,
-                    title = extendedTitle,
-                    message = LocalDate.now().toEpochDay().toString()
+            try {
+                NotificationManager.sendNotification(
+                    NotificationData(
+                        to = id,
+                        title = extendedTitle,
+                        message = LocalDate.now().toEpochDay().toString()
+                    )
                 )
-            )
-
-            // TODO check connection
+            } catch (e: Exception) {
+                showError(e.message ?: e.toString())
+            }
         }
     }
 
@@ -101,29 +95,16 @@ class ComposerViewModel : ViewModel() {
         }
     }
 
-    private fun startUsersJob() {
-        if (usersJob?.isActive == true) return
-
-        usersJob = viewModelScope.launch(coroutinesDispatchers.io) {
-            registration = usersDocuments.addSnapshotListener { documentSnapshot, exception ->
-                if (exception != null) {
-                    exception.printStackTrace()
-                    usersJob?.cancel()
-                    return@addSnapshotListener
-                }
-
-                val newUsers = mutableListOf<User>()
-                documentSnapshot?.data?.values?.forEach { userData ->
-                    @Suppress("UNCHECKED_CAST")
-                    (userData as? Map<String, Any>)
-                        ?.toDataClass<FirebaseUser>()
-                        ?.toUser()
-                        ?.also { newUsers.add(it) }
-                }
-
-                users = newUsers
-                if (state.value.availableUsers.isEmpty()) _state.update { it.copy(availableUsers = newUsers) }
+    private fun updateUsers() {
+        viewModelScope.launch(coroutinesDispatchers.io) {
+            val newUsers = try {
+                UsersRepo.getUsers()
+            } catch (e: Exception) {
+                showError(e.message ?: e.toString())
+                emptyList()
             }
+            users = newUsers
+            _state.update { it.copy(availableUsers = newUsers) }
         }
     }
 
@@ -136,8 +117,8 @@ class ComposerViewModel : ViewModel() {
         }
     }
 
-    private fun showError() {
-        _state.update { it.copy(errorMessage = "Error sending notification") }
+    private fun showError(message: String) {
+        _state.update { it.copy(errorMessage = message) }
     }
 
     private fun closeError() {
@@ -146,6 +127,6 @@ class ComposerViewModel : ViewModel() {
 
     override fun onCleared() {
         _state.update { ComposerState() }
-        registration?.remove()
+        viewModelScope.coroutineContext.cancelChildren()
     }
 }

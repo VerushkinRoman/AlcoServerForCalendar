@@ -1,5 +1,7 @@
 package ru.alcoserver.verushkinrg.notificationComposer.presentation.model
 
+import ru.alcoserver.verushkinrg.common.data.model.User
+
 sealed interface ComposerEvent {
     data object OnScreenEnter : ComposerEvent
     data object OnScreenExit : ComposerEvent

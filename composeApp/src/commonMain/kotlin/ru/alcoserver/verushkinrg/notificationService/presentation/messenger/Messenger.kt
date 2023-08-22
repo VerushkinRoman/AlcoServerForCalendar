@@ -3,7 +3,7 @@ package ru.alcoserver.verushkinrg.notificationService.presentation.messenger
 import com.google.firebase.messaging.AndroidConfig
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.Message
-import ru.alcoserver.verushkinrg.notificationComposer.presentation.model.NotificationData
+import ru.alcoserver.verushkinrg.common.data.model.NotificationData
 
 object Messenger {
     fun sendMessage(notificationData: NotificationData): String? {

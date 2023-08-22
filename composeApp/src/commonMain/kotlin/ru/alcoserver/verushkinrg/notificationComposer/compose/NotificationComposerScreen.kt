@@ -15,7 +15,7 @@ import ru.alcoserver.verushkinrg.notificationComposer.presentation.model.Compose
 import ru.alcoserver.verushkinrg.notificationComposer.presentation.model.ComposerState
 
 @Composable
-fun NotificationComposer(
+fun NotificationComposerScreen(
     modifier: Modifier
 ) {
     val viewModel = viewModel(modelClass = ComposerViewModel::class) { ComposerViewModel() }
