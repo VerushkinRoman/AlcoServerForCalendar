@@ -1,5 +1,6 @@
 package ru.alcoserver.verushkinrg.dbManager.presentation
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -222,8 +223,11 @@ class DBManagerViewModel : ViewModel() {
             val newUsers = try {
                 UsersRepo.getUsers()
             } catch (e: Exception) {
-                showError(e.message ?: e.toString())
-                emptyList()
+                if (e is CancellationException) throw e
+                else {
+                    showError(e.message ?: e.toString())
+                    emptyList()
+                }
             }
             users = newUsers
             _state.update { it.copy(availableUsers1 = newUsers, availableUsers2 = newUsers) }

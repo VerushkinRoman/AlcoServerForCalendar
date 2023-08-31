@@ -34,29 +34,18 @@ kotlin {
                 api(compose.foundation)
                 api(compose.animation)
                 implementation(compose.runtime)
-//                implementation(compose.material)
                 implementation(compose.material3)
-//                @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
-//                implementation(compose.components.resources)
                 implementation(libs.kotlinx.coroutines.core)
                 api(libs.precompose)
                 api(libs.precompose.viewmodel)
-//                implementation(libs.firebase.firestore)
                 implementation(libs.firebase.admin)
-//                implementation(libs.serialization)
                 implementation(libs.multiplatform.settings)
                 implementation(libs.kodein.di)
                 implementation(libs.mpfilepicker)
             }
         }
 
-        val androidMain by getting {
-            dependencies {
-                implementation(libs.androidx.appcompat)
-//                implementation(libs.compose.uitooling)
-                implementation(libs.kotlinx.coroutines.android)
-            }
-        }
+        val androidMain by getting {}
 
         val desktopMain by getting {
             dependencies {

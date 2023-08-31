@@ -21,12 +21,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import ru.alcoserver.verushkinrg.notificationService.presentation.model.NotificationServiceEvent
 import ru.alcoserver.verushkinrg.notificationService.presentation.model.NotificationServiceState
-import ru.alcoserver.verushkinrg.common.utils.openUrl
 
 @Composable
 fun ServiceScreenContent(
@@ -38,6 +38,7 @@ fun ServiceScreenContent(
     val filePickerOpened by derivedStateOf { state().filePickerOpened }
     val servicesPath by derivedStateOf { state().serviceAccountPath }
     val buttonsEnabled by derivedStateOf { servicesPath.isNotEmpty() }
+    val uriHandler = LocalUriHandler.current
 
     Column(
         modifier = modifier,
@@ -72,7 +73,7 @@ fun ServiceScreenContent(
 
         TextButton(
             onClick = {
-                openUrl("https://console.firebase.google.com/u/1/project/alcocalendar/firestore/data/")
+                uriHandler.openUri("https://console.firebase.google.com/u/1/project/alcocalendar/firestore/data/")
             }
         ) {
             Text("Open firebase console")

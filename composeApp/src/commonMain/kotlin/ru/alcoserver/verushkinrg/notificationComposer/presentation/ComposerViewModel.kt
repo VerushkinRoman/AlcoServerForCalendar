@@ -11,12 +11,13 @@ import moe.tlaster.precompose.viewmodel.viewModelScope
 import ru.alcoserver.verushkinrg.common.core.di.Inject
 import ru.alcoserver.verushkinrg.common.data.NotificationManager
 import ru.alcoserver.verushkinrg.common.data.UsersRepo
+import ru.alcoserver.verushkinrg.common.data.model.NotificationData
 import ru.alcoserver.verushkinrg.common.data.model.User
 import ru.alcoserver.verushkinrg.common.utils.CoroutinesDispatchers
 import ru.alcoserver.verushkinrg.notificationComposer.presentation.model.ComposerEvent
 import ru.alcoserver.verushkinrg.notificationComposer.presentation.model.ComposerState
-import ru.alcoserver.verushkinrg.common.data.model.NotificationData
 import java.time.LocalDate
+import kotlin.coroutines.cancellation.CancellationException
 
 class ComposerViewModel : ViewModel() {
     private val _state: MutableStateFlow<ComposerState> = MutableStateFlow(ComposerState())
@@ -100,8 +101,11 @@ class ComposerViewModel : ViewModel() {
             val newUsers = try {
                 UsersRepo.getUsers()
             } catch (e: Exception) {
-                showError(e.message ?: e.toString())
-                emptyList()
+                if (e is CancellationException) throw e
+                else {
+                    showError(e.message ?: e.toString())
+                    emptyList()
+                }
             }
             users = newUsers
             _state.update { it.copy(availableUsers = newUsers) }

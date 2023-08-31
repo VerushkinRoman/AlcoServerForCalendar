@@ -17,9 +17,9 @@ import moe.tlaster.precompose.viewmodel.ViewModel
 import moe.tlaster.precompose.viewmodel.viewModelScope
 import ru.alcoserver.verushkinrg.common.core.di.Inject
 import ru.alcoserver.verushkinrg.common.data.DBCleaner
+import ru.alcoserver.verushkinrg.common.data.model.NotificationData
 import ru.alcoserver.verushkinrg.common.settings.SettingsRepository
 import ru.alcoserver.verushkinrg.common.utils.CoroutinesDispatchers
-import ru.alcoserver.verushkinrg.common.data.model.NotificationData
 import ru.alcoserver.verushkinrg.notificationService.presentation.messenger.Messenger
 import ru.alcoserver.verushkinrg.notificationService.presentation.model.NotificationServiceEvent
 import ru.alcoserver.verushkinrg.notificationService.presentation.model.NotificationServiceState

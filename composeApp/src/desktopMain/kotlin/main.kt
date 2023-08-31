@@ -7,13 +7,10 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import moe.tlaster.precompose.PreComposeWindow
 import ru.alcoserver.verushkinrg.common.core.PlatformSDK
-import ru.alcoserver.verushkinrg.common.core.platform.PlatformConfiguration
 import ru.alcoserver.verushkinrg.notificationService.compose.ServiceScreen
 
 fun main() = application {
-    PlatformSDK.init(
-        configuration = PlatformConfiguration()
-    )
+    PlatformSDK.init()
 
     PreComposeWindow(
         title = "AlcoServer",
