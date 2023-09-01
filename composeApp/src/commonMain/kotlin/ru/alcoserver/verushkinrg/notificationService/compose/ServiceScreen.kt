@@ -35,6 +35,8 @@ fun ServiceScreen(
         }
 
         DisposableEffect(Unit) {
+            viewModel.onEvent(NotificationServiceEvent.Start)
+
             onDispose {
                 viewModel.onEvent(NotificationServiceEvent.Stop)
             }

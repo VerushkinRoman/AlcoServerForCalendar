@@ -48,8 +48,12 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "ru.alcoserver.verushkinrg.desktopApp"
+            packageName = "AlcoServer"
             packageVersion = "1.0.0"
+
+            windows {
+                iconFile.set(project.file("logo.ico"))
+            }
         }
     }
 }
