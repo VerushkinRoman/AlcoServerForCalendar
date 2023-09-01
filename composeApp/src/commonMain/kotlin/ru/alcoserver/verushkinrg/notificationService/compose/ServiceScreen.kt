@@ -3,6 +3,7 @@ package ru.alcoserver.verushkinrg.notificationService.compose
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -21,12 +22,17 @@ import ru.alcoserver.verushkinrg.theme.AppTheme
 
 @Composable
 fun ServiceScreen(
+    onStateChange: (Boolean) -> Unit,
     modifier: Modifier
 ) {
     AppTheme {
         val viewModel = remember { NotificationServiceViewModel() }
 
         val state by viewModel.state.collectAsState()
+
+        LaunchedEffect(state) {
+            onStateChange(state.running)
+        }
 
         DisposableEffect(Unit) {
             onDispose {

@@ -6,5 +6,6 @@ data class NotificationServiceState(
     val composeNotificationDialogOpened: Boolean = false,
     val errorMessage: String? = null,
     val serviceAccountPath: String = "",
-    val filePickerOpened: Boolean = false
+    val filePickerOpened: Boolean = false,
+    val isVisible: Boolean = true
 )
