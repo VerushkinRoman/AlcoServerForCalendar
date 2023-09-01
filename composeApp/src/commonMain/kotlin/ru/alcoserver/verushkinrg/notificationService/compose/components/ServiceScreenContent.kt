@@ -73,7 +73,7 @@ fun ServiceScreenContent(
 
         TextButton(
             onClick = {
-                uriHandler.openUri("https://console.firebase.google.com/u/1/project/alcocalendar/firestore/data/")
+                uriHandler.openUri("https://console.firebase.google.com/u/1/project/alcocalendar/firestore/data/~2FNotifications")
             }
         ) {
             Text("Open firebase console")

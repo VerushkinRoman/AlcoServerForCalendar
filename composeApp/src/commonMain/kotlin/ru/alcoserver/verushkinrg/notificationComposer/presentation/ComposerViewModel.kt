@@ -1,13 +1,13 @@
 package ru.alcoserver.verushkinrg.notificationComposer.presentation
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import moe.tlaster.precompose.viewmodel.ViewModel
-import moe.tlaster.precompose.viewmodel.viewModelScope
 import ru.alcoserver.verushkinrg.common.core.di.Inject
 import ru.alcoserver.verushkinrg.common.data.NotificationManager
 import ru.alcoserver.verushkinrg.common.data.UsersRepo
@@ -19,12 +19,14 @@ import ru.alcoserver.verushkinrg.notificationComposer.presentation.model.Compose
 import java.time.LocalDate
 import kotlin.coroutines.cancellation.CancellationException
 
-class ComposerViewModel : ViewModel() {
+class ComposerViewModel {
     private val _state: MutableStateFlow<ComposerState> = MutableStateFlow(ComposerState())
     val state: StateFlow<ComposerState> = _state.asStateFlow()
 
     private val coroutinesDispatchers: CoroutinesDispatchers = Inject.instance()
     private var users: List<User> = emptyList()
+    private val viewModelScope: CoroutineScope =
+        CoroutineScope(coroutinesDispatchers.io + SupervisorJob())
 
     fun onEvent(event: ComposerEvent) {
         when (event) {
@@ -129,8 +131,7 @@ class ComposerViewModel : ViewModel() {
         _state.update { it.copy(errorMessage = null) }
     }
 
-    override fun onCleared() {
-        _state.update { ComposerState() }
+    private fun onCleared() {
         viewModelScope.coroutineContext.cancelChildren()
     }
 }

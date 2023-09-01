@@ -1,14 +1,14 @@
 package ru.alcoserver.verushkinrg.dbManager.presentation
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import moe.tlaster.precompose.viewmodel.ViewModel
-import moe.tlaster.precompose.viewmodel.viewModelScope
 import ru.alcoserver.verushkinrg.common.core.di.Inject
 import ru.alcoserver.verushkinrg.common.data.DBCleaner
 import ru.alcoserver.verushkinrg.common.data.NotificationManager
@@ -22,13 +22,15 @@ import ru.alcoserver.verushkinrg.common.utils.CoroutinesDispatchers
 import ru.alcoserver.verushkinrg.dbManager.presentation.model.DBManagerEvent
 import ru.alcoserver.verushkinrg.dbManager.presentation.model.DBManagerState
 
-class DBManagerViewModel : ViewModel() {
+class DBManagerViewModel {
     private val _state: MutableStateFlow<DBManagerState> = MutableStateFlow(DBManagerState())
     val state: StateFlow<DBManagerState> = _state.asStateFlow()
 
     private val coroutinesDispatchers: CoroutinesDispatchers = Inject.instance()
     private val repository: Repository = Inject.instance()
     private var users: List<User> = emptyList()
+    private val viewModelScope: CoroutineScope =
+        CoroutineScope(coroutinesDispatchers.io + SupervisorJob())
 
     fun onEvent(event: DBManagerEvent) {
         when (event) {
@@ -260,8 +262,7 @@ class DBManagerViewModel : ViewModel() {
         _state.update { it.copy(errorMessage = null) }
     }
 
-    override fun onCleared() {
-        _state.update { DBManagerState() }
+    private fun onCleared() {
         viewModelScope.coroutineContext.cancelChildren()
     }
 

@@ -2,12 +2,11 @@ package ru.alcoserver.verushkinrg.dbManager.compose
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import moe.tlaster.precompose.flow.collectAsStateWithLifecycle
-import moe.tlaster.precompose.viewmodel.viewModel
 import ru.alcoserver.verushkinrg.common.compose.ErrorDialog
 import ru.alcoserver.verushkinrg.dbManager.compose.components.DBManagerContent
 import ru.alcoserver.verushkinrg.dbManager.presentation.DBManagerViewModel
@@ -18,8 +17,8 @@ import ru.alcoserver.verushkinrg.dbManager.presentation.model.DBManagerState
 fun DBManagerScreen(
     modifier: Modifier
 ) {
-    val viewModel = viewModel(modelClass = DBManagerViewModel::class) { DBManagerViewModel() }
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val viewModel = remember { DBManagerViewModel() }
+    val state by viewModel.state.collectAsState()
 
     DisposableEffect(Unit) {
         viewModel.onEvent(DBManagerEvent.OnScreenEnter)

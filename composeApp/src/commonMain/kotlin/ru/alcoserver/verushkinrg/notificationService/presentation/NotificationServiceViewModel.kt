@@ -6,15 +6,15 @@ import com.google.cloud.firestore.ListenerRegistration
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.cloud.FirestoreClient
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import moe.tlaster.precompose.viewmodel.ViewModel
-import moe.tlaster.precompose.viewmodel.viewModelScope
 import ru.alcoserver.verushkinrg.common.core.di.Inject
 import ru.alcoserver.verushkinrg.common.data.DBCleaner
 import ru.alcoserver.verushkinrg.common.data.model.NotificationData
@@ -29,12 +29,14 @@ import java.time.LocalDate
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 
-class NotificationServiceViewModel : ViewModel() {
+class NotificationServiceViewModel {
     private val _state = MutableStateFlow(NotificationServiceState())
     val state: StateFlow<NotificationServiceState> = _state.asStateFlow()
 
     private val settingsRepository: SettingsRepository = Inject.instance()
     private val coroutinesDispatchers: CoroutinesDispatchers = Inject.instance()
+    private val viewModelScope: CoroutineScope =
+        CoroutineScope(coroutinesDispatchers.io + SupervisorJob())
     private var monitoringJob: Job? = null
 
     private var notifications: CollectionReference? = null

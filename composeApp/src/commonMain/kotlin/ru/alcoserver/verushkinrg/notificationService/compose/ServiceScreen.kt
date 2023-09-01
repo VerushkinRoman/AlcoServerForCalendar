@@ -2,13 +2,13 @@ package ru.alcoserver.verushkinrg.notificationService.compose
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import moe.tlaster.precompose.flow.collectAsStateWithLifecycle
-import moe.tlaster.precompose.viewmodel.viewModel
 import ru.alcoserver.verushkinrg.common.compose.ErrorDialog
 import ru.alcoserver.verushkinrg.common.compose.ThemedWindow
 import ru.alcoserver.verushkinrg.dbManager.compose.DBManagerScreen
@@ -24,10 +24,15 @@ fun ServiceScreen(
     modifier: Modifier
 ) {
     AppTheme {
-        val viewModel =
-            viewModel(modelClass = NotificationServiceViewModel::class) { NotificationServiceViewModel() }
+        val viewModel = remember { NotificationServiceViewModel() }
 
-        val state by viewModel.state.collectAsStateWithLifecycle()
+        val state by viewModel.state.collectAsState()
+
+        DisposableEffect(Unit) {
+            onDispose {
+                viewModel.onEvent(NotificationServiceEvent.Stop)
+            }
+        }
 
         ServiceScreenContent(
             state = { state },
